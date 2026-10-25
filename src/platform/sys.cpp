@@ -1197,7 +1197,7 @@ extern "C" const char *Sys_GetInstallSetting(const char *name)
     if (SDL_strcasecmp(name, "Language") == 0)
         return Platform_GetSetting("install.language", "English");
     if (SDL_strcasecmp(name, "Sku_Type") == 0)
-        return Platform_GetSetting("install.sku", "EUROPE");
+        return Platform_GetSetting("install.sku", "POLAND");
     return "";
 }
 
