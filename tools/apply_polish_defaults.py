@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Make Polish the first-run language/region defaults without changing user configs.
+"""Make Polish the first-run language default without changing user configs.
 
 This script is intentionally idempotent so it can be reapplied after syncing upstream.
 """
@@ -9,7 +9,6 @@ path = Path("src/platform/sys.cpp")
 source = path.read_text(encoding="utf-8")
 pairs = (
     ('    "language = English\\n"', '    "language = Polish\\n"'),
-    ('    "sku = EUROPE\\n"', '    "sku = EUROPE\\n"'),
 )
 
 for original, desired in pairs:
