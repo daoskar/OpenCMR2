@@ -9,7 +9,7 @@ path = Path("src/platform/sys.cpp")
 source = path.read_text(encoding="utf-8")
 pairs = (
     ('    "language = English\\n"', '    "language = Polish\\n"'),
-    ('    "sku = EUROPE\\n"', '    "sku = POLAND\\n"'),
+    ('    "sku = EUROPE\\n"', '    "sku = EUROPE\\n"'),
 )
 
 for original, desired in pairs:
@@ -24,4 +24,4 @@ for original, desired in pairs:
     source = source.replace(original, desired, 1)
 
 path.write_text(source, encoding="utf-8")
-print("Polish defaults applied: language=Polish, sku=POLAND")
+print("Polish defaults applied: language=Polish, sku=EUROPE")
