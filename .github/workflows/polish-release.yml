@@ -1,0 +1,107 @@
+name: Polish Android release
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "37 4 * * *"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: polish-upstream-release
+  cancel-in-progress: false
+
+jobs:
+  sync-build-release:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout fork
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Check and sync upstream
+        id: sync
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git remote add upstream https://github.com/pablocpas/OpenCMR2.git
+          git fetch upstream main
+          upstream_sha="$(git rev-parse upstream/main)"
+          previous_sha="$(cat .github/upstream-sync.sha 2>/dev/null || true)"
+
+          if [[ "$previous_sha" == "$upstream_sha" ]]; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "Upstream has not changed; no new release needed."
+            exit 0
+          fi
+
+          # Merge upstream so the fork retains this workflow and the patch script.
+          # If upstream edits the exact same settings-template file, prefer the
+          # upstream version and reapply the small, checked patch below.
+          if ! git merge --no-edit upstream/main; then
+            conflicts="$(git diff --name-only --diff-filter=U)"
+            if [[ "$conflicts" == "src/platform/sys.cpp" ]]; then
+              git checkout --theirs -- src/platform/sys.cpp
+              git add src/platform/sys.cpp
+              git commit -m "Merge upstream main and refresh settings template"
+            else
+              echo "Upstream merge has unexpected conflicts:"
+              printf '%s\n' "$conflicts"
+              git merge --abort || true
+              exit 1
+            fi
+          fi
+
+          python3 tools/apply_polish_defaults.py
+          printf '%s\n' "$upstream_sha" > .github/upstream-sync.sha
+          git add src/platform/sys.cpp tools/apply_polish_defaults.py .github/upstream-sync.sha .github/workflows/polish-release.yml
+          if ! git diff --cached --quiet; then
+            git commit -m "Sync upstream and keep Polish defaults"
+          fi
+          git push origin HEAD:main
+
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+          echo "upstream_sha=$upstream_sha" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Java
+        if: steps.sync.outputs.changed == 'true'
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Set up Gradle
+        if: steps.sync.outputs.changed == 'true'
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Install Android SDK, NDK and build tools
+        if: steps.sync.outputs.changed == 'true'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y glslang-tools
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install \
+            "platforms;android-37.0" "ndk;30.0.16248370" "cmake;4.1.2" > /dev/null
+
+      - name: Build Polish APK
+        if: steps.sync.outputs.changed == 'true'
+        working-directory: android
+        run: ./gradlew assembleRelease
+
+      - name: Publish GitHub Release
+        if: steps.sync.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          UPSTREAM_SHA: ${{ steps.sync.outputs.upstream_sha }}
+        run: |
+          set -euo pipefail
+          short_sha="${UPSTREAM_SHA:0:7}"
+          tag="polish-$(date -u +%Y.%m.%d)-${short_sha}"
+          gh release create "$tag" android/app/build/outputs/apk/release/app-release.apk \
+            --title "OpenCMR2 Polish ${tag}" \
+            --notes "Polish-default OpenCMR2 Android build. Synced from upstream commit ${UPSTREAM_SHA}. The APK does not include copyrighted game data; use your own original game files."
