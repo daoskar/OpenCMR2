@@ -288,7 +288,7 @@ const char s_defaultSettings[] =
     "; English, American, French, German, Italian, Spanish or Polish.\n"
     "language = Polish\n"
     "; EUROPE, AMERICA, POLAND or JAPAN.\n"
-    "sku = EUROPE\n"
+    "sku = POLAND\n"
     "\n"
     "[video]\n"
     "; 1 = fullscreen (on the desktop resolution), 0 = window. Alt+Enter\n"
