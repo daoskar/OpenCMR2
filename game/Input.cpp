@@ -1308,7 +1308,9 @@ void CInput::InitDetectedControllerSlot(DeviceInfo *pDevice, int index)
 
     pController = &m_controllerInfo[index];
     pController->index = (BYTE)index;
-    strcpy(pController->name, pDevice->deviceInstanceName);
+    // Android may expose controller names longer than ControllerData::name.
+    // Bound the copy to avoid FORTIFY aborting while building the controls menu.
+    snprintf(pController->name, sizeof(pController->name), "%s", pDevice->deviceInstanceName);
     pController->field_0x10c = (pDevice->field_0x0 == 3 || pDevice->field_0x0 == 2) ? 1 : 0;
     pController->field_0x110 = (pDevice->field_0x0 == 3 || pDevice->field_0x0 == 2) ? 1 : 0;
     pController->field_0x114 = (pDevice->field_0x0 == 3 || pDevice->field_0x0 == 2) ? 1 : 0;
