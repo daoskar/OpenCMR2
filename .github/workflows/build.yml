@@ -152,7 +152,9 @@ jobs:
       # Always provide a real keystore. The previous fallback selected the
       # Gradle debug config but the produced release APK was actually unsigned.
       - name: Generate fallback signing key
-        if: secrets.ANDROID_KEYSTORE == ''
+        env:
+          KEYSTORE: ${{ secrets.ANDROID_KEYSTORE }}
+        if: env.KEYSTORE == ''
         run: |
           keytool -genkeypair -noprompt -keystore "$RUNNER_TEMP/opencmr2-debug.jks" \
             -storepass android -keypass android -alias androiddebugkey \
