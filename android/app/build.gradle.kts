@@ -51,7 +51,7 @@ fun git(vararg args: String): String =
 
 android {
     namespace = "io.github.pablocpas.opencmr2"
-    compileSdk = 36
+    compileSdk = 37
     ndkVersion = "30.0.16248370"
 
     defaultConfig {
