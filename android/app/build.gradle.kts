@@ -51,14 +51,14 @@ fun git(vararg args: String): String =
 
 android {
     namespace = "io.github.pablocpas.opencmr2"
-    compileSdk = 37
+    compileSdk = 36
     ndkVersion = "30.0.16248370"
 
     defaultConfig {
         applicationId = "io.github.pablocpas.opencmr2"
         // Android 10: Vulkan 1.1 on every 64-bit device.
         minSdk = 29
-        targetSdk = 37
+        targetSdk = 36
         versionCode = git("rev-list", "--count", "HEAD").toIntOrNull() ?: 1
         versionName = git("describe", "--tags", "--always").removePrefix("v").ifEmpty { "dev" }
 
